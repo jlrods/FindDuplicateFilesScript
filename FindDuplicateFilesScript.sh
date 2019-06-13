@@ -78,6 +78,13 @@ checkFirstInstance(){
 	fi
 }
 
+#Funtion to check all files in current directory
+checkAllFiles(){
+	for x in  pwd
+	do
+		checkFirstInstance x
+	done
+}
 
 #Check the number of parameters passed in is correct. The script can accept one or no argument, other than that 
 #must report an error.
@@ -89,16 +96,16 @@ if [ $# -eq 0 ] || [ $# -eq 1 ]; then
 	echo "The root directory for the current search is $rootDir"
 
 	#Check the current root directory isn't empty
-	if [ $((countFilesInDir $rootDir)) -gt 0 ] && [ $((countSubDirInDir $rooDir)) -gt 0 ]; then
+	if [ $((countFilesInDir $rootDir)) -gt 0 ] || [ $((countSubDirInDir $rooDir)) -gt 0 ]; then
 		#Create a temp directory to store temporary working files
 		mkdir tmpDir
 		echo "Working directory has been created"
 		#Start the search
 		#For each file in the current directory check if its the first instance
-		for x in  *
+		for d in Dir
+		do 
+			checkAllFiles
 		do
-			checkFirstInstance x
-		done
 		
 	else
 		#Prompt the user the root directory passed in as parameter is empty
