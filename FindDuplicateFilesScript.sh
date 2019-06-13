@@ -27,10 +27,10 @@ countSubDirInDir(){
 
 #Function to verify a file already exists. It takes two arguments (the directory and the file name)
 checkFileExists(){
-	if [ -f $1 ]; then
-		found=$((grep $2 $1 | wc -l))
+	if [ -e "$1"/"$2" ]; then
+		found=$((ls -l "$2" | wc -l))
 	else
-		touch $1
+		touch "$1"/"$2"
 		found=0
 	fi
 }
@@ -45,7 +45,7 @@ appendNewLocation(){
 #first duplicate file is found
 addInDuplicates(){
 	#Check the current file is in the duplicates file
-	checkFileExists $tmpDir/$dup $1
+	checkFileExists "$tmpDir/$dup" "$1"
 	#Check if the current file $1 is not in the duplicate file.
 	if [ $found -eq 0 ]; then
 		#If that is the case, the add the name to the list as this is the first time to see the file name.
@@ -65,7 +65,7 @@ addInDuplicates(){
 # what to do: add it to the firstInstance file or add the extra location of duplicate file.
 checkFirstInstance(){
 	#Check the current file is in the firstInstance file
-	checkFileExists $tmpDir/$fInst $1
+	checkFileExists "$tmpDir/$fInst" "$1"
 	#Check if the current file $1 is not in the firstInstance file.
 	if [ $found -eq 0 ]; then
 		#If that is the case, the add the name to the list as this is the first time to see the file name.
