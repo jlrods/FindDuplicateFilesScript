@@ -46,7 +46,9 @@ checkFileExists(){
 		#If file does exist, change found env variable and assign the number of times the file name $2 shows up on the file $1
 		#This value should always return 1 as no file should be twice in either  files firstInstance nor duplicates.
 		#If that is not the case the, the error will be handled on the piece of code that calls this function.
-		found=$(grep -c ^"$2" "$1")
+		#Iterate through the file passed in as parameter and look for the file name $2, include the colom : sign to make sure sure the full 
+		#name of file is captured.If this is not done shrot names that might be substrings of larger name will be captured as duplicates.
+		found=$(grep -c ^"$2:" "$1")
 	else
 		#In case the files doesn't exist, the file  $1 is created and the found varialble is returned as 0, as file anme $2 is not there, ovbiously.
 		touch "$1"
@@ -70,14 +72,16 @@ addDuplicates(){
 	if [ $found -eq 0 ]; then
 		#If that is the case, the add the name to the list as this is the first time to see the file name.
 		echo "$1:$2:$3" >> "$tmpDir"/"$dup"
-		echo ""$1" has been added to "$dup" file. First reocurrence."
+		echo ""$1" has been added to "$dup" file. First recurrence."
 	elif [ $found -eq 1 ]; then	
 		#Append the current working directory to the end of the line where the file name is
 		appendNewLocation "$1" "$3"
-		echo ""$1" has been added to "$dup" file. New reocurrence."
+		echo ""$1" has been added to "$dup" file. New recurrence."
 	else
 		#If file name $1 is present more than once in the duplicates.txt file, report an error.
-		echo "Error! a file cannot be recorded more than once on $tmpDir/$dup. File name: $1"		
+		echo "Error! a file cannot be recorded more than once on $tmpDir/$dup. File name: $1"
+		rm -r $tmpDir 
+		exit 6
 	fi
 }
 
@@ -106,6 +110,8 @@ checkFirstInstance(){
 	else
 		#If file name $1 is present more than once in the firstInstance.txt file, report an error.
 		echo "Error! a file cannot be recorded more than once on $tmpDir/$fInst. File name: $1"
+		rm -r $tmpDir 
+		exit 5
 	fi	
 }
 
@@ -134,7 +140,8 @@ checkAllFolders(){
 		else
 			#In case the current item being inspected is not a file or directory, an error is displayed.
 			echo "Error"
-			exit 3
+			rm -r $tmpDir 
+			exit 4
 		fi
 	done	
 }
@@ -152,6 +159,8 @@ generateFinalDuplicatesFile(){
 	else
 		#Display error message
 		echo "Error, the "$dup" file must exist in the "$tmpDir" directory!"
+		rm -r $tmpDir 
+		exit 3
 	fi
 }
 
@@ -183,22 +192,30 @@ if [ $# -eq 0 ] || [ $# -eq 1 ]; then
 		#Pass the root directory as initial seed for the iterative search.
 		checkAllFolders "$rootDir"
 		
-		#Once the search process is done, the duplicates.txt file must be presented in better looking format.
-		#The proposed solution consists of calling a function that will iterate through the file line by line and split the line into two chuncks: 
-		#The file name as a header, followd by the second part, a list of directory locations where files with same basename were found.
-		generateFinalDuplicatesFile
-		echo "The Final Duplicates file has been generated."
-		
-		#Move FindDuplicateFiles file to root directory 
-		mv "$tmpDir"/"$dupFinal" "$rootDir"
-		echo "The "$dupFinal" files has been moved to this folder: "$rootDir""
-		#Display presentable duplicates file
-		#Open the DuplicatesFinal file
-		gedit "$rootDir"/"$dupFinal" &
-		
+		#Check if script found any duplicate files by checking the duplicates files exist and is not empty
+		if [ -f "$tmpDir"/"$dup" ] && [ $(awk 'END {print NR}' "$tmpDir"/"$dup") -gt 0 ]; then
+			#Once the search process is done, the duplicates.txt file must be presented in better looking format.
+			#The proposed solution consists of calling a function that will iterate through the file line by line and split the line into two chuncks: 
+			#The file name as a header, followd by the second part, a list of directory locations where files with same basename were found.
+			generateFinalDuplicatesFile
+			echo "The Final Duplicates file has been generated"
+			
+			#Move FindDuplicateFiles file to root directory 
+			mv "$tmpDir"/"$dupFinal" "$rootDir"
+			echo "The "$dupFinal" files has been moved to this folder: "$rootDir" and is to be displayed on the notepad."
+			#Display presentable duplicates file
+			#Open the DuplicatesFinal file
+			gedit "$rootDir"/"$dupFinal" &
+		else
+			#If no duplictes files is found, means there are no duplicates in the specified directory
+			echo "No duplicate files have been found on the "$rootDir" or sub-directories!"
+
+		fi
 		#Remove temporary files
 		rm -r $tmpDir 
-		echo Temporary files have been removed!
+		echo "Temporary files have been removed!"
+		echo "Good bye!"
+		exit 0
 	else
 		#Prompt the user the root directory passed in as parameter is empty
 		echo "The directory "$rootDir" is empty. Please, try a different location to start the search."
@@ -210,4 +227,3 @@ else
 	echo "Please, try again."
 	exit 1
 fi
-
